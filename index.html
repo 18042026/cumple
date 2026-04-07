@@ -322,7 +322,9 @@
 </style>
 </head>
 <body>
-<div class="container">
+<div class="container" id="contenido" style="display:none;">
+  <h1>🎉 Estás invitado 🎉</h1>
+  <h2 id="nombreInvitado"></h2>
   <div class="flyer-wrap reveal">
     <img src="https://18042026.github.io/cumple/cumple.jpeg" alt="Flyer Gonzalo 30">
   </div>
@@ -334,7 +336,7 @@
   </div>
 
   <div class="divider reveal"><span>✦</span></div>
-
+  
   <div class="event-info section reveal">
     <h2 class="event-q">¿Cuándo?</h2>
     <p class="event-human">El <strong>18.04.2026</strong> a las <strong>21:00 hs</strong> hasta las <strong>00:00 hs</strong>.</p>
@@ -399,48 +401,40 @@ const API_URL = "https://script.google.com/macros/s/AKfycbxw5V9JGiJ6s3EUXUSEVggk
 let usuarioActual = null;
 
 // ocultar contenido al inicio
-document.body.style.display = "none";
+document.getElementById("contenido").style.display = "none";
 
 // LOGIN
 async function login() {
-  try {
-    const res = await fetch(API_URL);
-    const data = await res.json();
+  const res = await fetch(API_URL);
+  const data = await res.json();
 
-    let input = prompt("Ingresá tu contraseña");
+  let input = prompt("Ingresá tu contraseña");
 
-    if (!input) return;
+  input = input.toLowerCase().replace(/\s+/g, '');
 
-    input = input.toLowerCase().replace(/\s+/g, '');
+  for (let i = 1; i < data.length; i++) {
+    let id = data[i][0];
+    let nombre = data[i][1];
+    let password = data[i][2];
+    let estado = data[i][3];
 
-    for (let i = 1; i < data.length; i++) {
-      let id = data[i][0];
-      let nombre = data[i][1];
-      let password = data[i][2];
-      let estado = data[i][3];
+    if (password === input) {
+      usuarioActual = { id, nombre, estado };
 
-      if (password === input) {
-        usuarioActual = { id, nombre, estado };
+      document.getElementById("nombreInvitado").innerText = "Hola " + nombre;
 
-        // mostrar la página
-        document.body.style.display = "block";
+      // 🔥 mostrar contenido correctamente
+      document.getElementById("contenido").style.display = "block";
 
-        // marcar como leído si nunca entró
-        if (estado === "sin_visitar") {
-          await actualizarEstado(id, "leido");
-        }
-
-        return;
+      if (estado === "sin_visitar") {
+        await actualizarEstado(id, "leido");
       }
+
+      return;
     }
-
-    alert("Contraseña incorrecta");
-    document.body.innerHTML = "<h1>Acceso denegado</h1>";
-
-  } catch (error) {
-    console.error(error);
-    alert("Error al conectar con el servidor");
   }
+
+  alert("Contraseña incorrecta");
 }
 
 // ACTUALIZAR ESTADO EN GOOGLE SHEETS
