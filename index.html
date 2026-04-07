@@ -365,23 +365,7 @@
     <button type="button" class="attend-btn" id="toggleFormBtn" onclick="toggleForm()">Confirmo asistencia</button>
 
     <div class="form-box" id="attendForm">
-      <label class="form-label">Nombre, apellido o apodo</label>
-      <input class="form-input" type="text" id="nameInput" placeholder="Ej: Gonza, La Tora, Perez...">
-      <div class="error-msg" id="nameError" style="display:none;">Ingresá un nombre</div>
-
-      <label class="form-label">Círculo social</label>
-      <select class="form-select" id="circleInput">
-        <option value="">— Elegí tu círculo —</option>
-        <option value="Kennedy">Kennedy</option>
-        <option value="Belgrano">Belgrano</option>
-        <option value="Suller">Suller</option>
-        <option value="Muni">Muni</option>
-        <option value="La Vida">La Vida</option>
-        <option value="Otro">Otro</option>
-      </select>
-      <div class="error-msg" id="circleError" style="display:none;">Elegí tu círculo</div>
-
-      <button type="button" class="submit-btn" onclick="submitAttendance()">Sumar mi nombre ✦</button>
+      <button onclick="confirmarAsistencia()">Confirmar asistencia</button>
     </div>
 
     <div class="success-msg" id="successMsg"></div>
@@ -409,143 +393,80 @@
   <p class="footer-txt reveal">Gonza · 30 años · 2026</p>
 
 </div>
-
 <script>
-  const STORAGE_KEY = 'gonza30_guests_v3';
+const API_URL = "https://script.google.com/macros/s/AKfycbxw5V9JGiJ6s3EUXUSEVggkfRJZvMOQ7NnSyjKVDcp9afx02XknYOaLrgB4I6AKYX0Q/exec";
 
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+let usuarioActual = null;
+
+// ocultar contenido al inicio
+document.body.style.display = "none";
+
+// LOGIN
+async function login() {
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+
+    let input = prompt("Ingresá tu contraseña");
+
+    if (!input) return;
+
+    input = input.toLowerCase().replace(/\s+/g, '');
+
+    for (let i = 1; i < data.length; i++) {
+      let id = data[i][0];
+      let nombre = data[i][1];
+      let password = data[i][2];
+      let estado = data[i][3];
+
+      if (password === input) {
+        usuarioActual = { id, nombre, estado };
+
+        // mostrar la página
+        document.body.style.display = "block";
+
+        // marcar como leído si nunca entró
+        if (estado === "sin_visitar") {
+          await actualizarEstado(id, "leido");
+        }
+
+        return;
+      }
+    }
+
+    alert("Contraseña incorrecta");
+    document.body.innerHTML = "<h1>Acceso denegado</h1>";
+
+  } catch (error) {
+    console.error(error);
+    alert("Error al conectar con el servidor");
   }
+}
 
-  function loadGuests() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch(e) { return []; }
+// ACTUALIZAR ESTADO EN GOOGLE SHEETS
+async function actualizarEstado(id, estado) {
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ id, estado }),
+  });
+}
+
+// CONFIRMAR ASISTENCIA
+async function confirmarAsistencia() {
+  if (!usuarioActual) return;
+
+  let ok = confirm("¿Querés confirmar tu invitación?");
+
+  if (ok) {
+    await actualizarEstado(usuarioActual.id, "confirmado");
+    alert("¡Asistencia confirmada!");
   }
+}
 
-  function saveGuests(guests) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(guests)); } catch(e) {}
-  }
-
-  function renderGuests() {
-    const guests = loadGuests();
-    const counter = document.getElementById('counterNum');
-    const listWrap = document.getElementById('guestsList');
-    const list = document.getElementById('guestsListInner');
-    counter.textContent = guests.length;
-    if (guests.length === 0) { listWrap.style.display = 'none'; return; }
-    listWrap.style.display = 'block';
-    list.innerHTML = guests.map(function(g) {
-      return '<span class="guest-pill">' + escapeHtml(g.name) + '<span class="guest-circle"> · ' + escapeHtml(g.circle) + '</span></span>';
-    }).join('');
-  }
-
-  function toggleForm() {
-    const form = document.getElementById('attendForm');
-    const btn = document.getElementById('toggleFormBtn');
-    const isVisible = form.classList.contains('visible');
-    if (isVisible) {
-      form.classList.remove('visible');
-      btn.textContent = 'Confirmo asistencia';
-    } else {
-      form.classList.add('visible');
-      btn.textContent = 'Cerrar';
-    }
-  }
-
-  function submitAttendance() {
-    const name = document.getElementById('nameInput').value.trim();
-    const circle = document.getElementById('circleInput').value;
-    const nameErr = document.getElementById('nameError');
-    const circleErr = document.getElementById('circleError');
-    const successMsg = document.getElementById('successMsg');
-
-    nameErr.style.display = 'none';
-    circleErr.style.display = 'none';
-    successMsg.classList.remove('visible');
-
-    let valid = true;
-    if (!name) { nameErr.style.display = 'block'; valid = false; }
-    if (!circle) { circleErr.style.display = 'block'; valid = false; }
-    if (!valid) return;
-
-    const guests = loadGuests();
-    const already = guests.some(function(g) { return g.name.toLowerCase() === name.toLowerCase(); });
-    if (already) {
-      successMsg.textContent = name + ' ya confirmó. ¡Nos vemos el 18!';
-      successMsg.classList.add('visible');
-      return;
-    }
-
-    guests.push({ name: name, circle: circle });
-    saveGuests(guests);
-    renderGuests();
-
-    document.getElementById('nameInput').value = '';
-    document.getElementById('circleInput').value = '';
-    document.getElementById('attendForm').classList.remove('visible');
-    document.getElementById('toggleFormBtn').textContent = 'Confirmo asistencia';
-
-    successMsg.textContent = '¡' + name + ' confirmado/a! Nos vemos el 18 ✦';
-    successMsg.classList.add('visible');
-
-    setTimeout(function() { successMsg.classList.remove('visible'); }, 4000);
-  }
-
-  renderGuests();
-
-  (function initBandeetScroll() {
-    var img = document.getElementById('bandeetImg');
-    if (!img) return;
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      img.style.setProperty('--bandeet-color', '1');
-      return;
-    }
-    var startPx = 30;
-    var rangePx = 720;
-    var raf = null;
-    function update() {
-      raf = null;
-      var y = window.scrollY || document.documentElement.scrollTop;
-      var p = (y - startPx) / rangePx;
-      if (p < 0) p = 0;
-      if (p > 1) p = 1;
-      img.style.setProperty('--bandeet-color', p.toFixed(4));
-    }
-    function onScroll() {
-      if (raf) return;
-      raf = window.requestAnimationFrame(update);
-    }
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll, { passive: true });
-    update();
-  })();
-
-  (function initScrollReveal() {
-    var nodes = document.querySelectorAll('.reveal');
-    if (!nodes.length) return;
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      nodes.forEach(function(el) { el.classList.add('is-visible'); });
-      return;
-    }
-    if (!('IntersectionObserver' in window)) {
-      nodes.forEach(function(el) { el.classList.add('is-visible'); });
-      return;
-    }
-    var io = new IntersectionObserver(function(entries) {
-      entries.forEach(function(entry) {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add('is-visible');
-        io.unobserve(entry.target);
-      });
-    }, { root: null, rootMargin: '0px 0px -6% 0px', threshold: 0.08 });
-    nodes.forEach(function(el) { io.observe(el); });
-  })();
+// iniciar login
+login();
 </script>
+
+ 
 </body>
 </html>
