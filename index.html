@@ -463,43 +463,53 @@ function toggleForm() {
   form.style.display = (form.style.display==="block")?"none":"block";
 }
 
-// SUMAR ASISTENCIA
-function submitAttendance() {
-  const name = document.getElementById("nameInput").value.trim();
-  const circle = document.getElementById("circleInput").value;
-  const nameErr = document.getElementById("nameError");
-  const circleErr = document.getElementById("circleError");
-  const successMsg = document.getElementById("successMsg");
+(function initBandeetScroll() {
+    var img = document.getElementById('bandeetImg');
+    if (!img) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      img.style.setProperty('--bandeet-color', '1');
+      return;
+    }
+    var startPx = 30;
+    var rangePx = 720;
+    var raf = null;
+    function update() {
+      raf = null;
+      var y = window.scrollY || document.documentElement.scrollTop;
+      var p = (y - startPx) / rangePx;
+      if (p < 0) p = 0;
+      if (p > 1) p = 1;
+      img.style.setProperty('--bandeet-color', p.toFixed(4));
+    }
+    function onScroll() {
+      if (raf) return;
+      raf = window.requestAnimationFrame(update);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    update();
+  })();
 
-  nameErr.style.display = "none";
-  circleErr.style.display = "none";
-  successMsg.style.display = "none";
-
-  if (!name) { nameErr.style.display="block"; return; }
-  if (!circle) { circleErr.style.display="block"; return; }
-
-  if (guests.some(g => g.name.toLowerCase()===name.toLowerCase())) {
-    successMsg.textContent = name + " ya confirmó. ¡Nos vemos el 18!";
-    successMsg.style.display = "block";
-    return;
-  }
-
-  guests.push({name, circle});
-  renderGuests();
-
-  successMsg.textContent = "¡" + name + " confirmado/a! Nos vemos el 18 ✦";
-  successMsg.style.display = "block";
-
-  document.getElementById("nameInput").value="";
-  document.getElementById("circleInput").value="";
-}
-
-// RENDERIZAR LISTA
-function renderGuests() {
-  const list = document.getElementById("guestsListInner");
-  list.innerHTML = guests.map(g => `<span class="guest-pill">${g.name}<span class="guest-circle"> · ${g.circle}</span></span>`).join("");
-  document.getElementById("counterNum").textContent = guests.length;
-}
+  (function initScrollReveal() {
+    var nodes = document.querySelectorAll('.reveal');
+    if (!nodes.length) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      nodes.forEach(function(el) { el.classList.add('is-visible'); });
+      return;
+    }
+    if (!('IntersectionObserver' in window)) {
+      nodes.forEach(function(el) { el.classList.add('is-visible'); });
+      return;
+    }
+    var io = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        io.unobserve(entry.target);
+      });
+    }, { root: null, rootMargin: '0px 0px -6% 0px', threshold: 0.08 });
+    nodes.forEach(function(el) { io.observe(el); });
+  })();
 
 // iniciar login
 login();
