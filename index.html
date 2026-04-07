@@ -457,6 +457,50 @@ async function confirmarAsistencia() {
   }
 }
 
+ // TOGGLE FORM
+function toggleForm() {
+  const form = document.getElementById("attendForm");
+  form.style.display = (form.style.display==="block")?"none":"block";
+}
+
+// SUMAR ASISTENCIA
+function submitAttendance() {
+  const name = document.getElementById("nameInput").value.trim();
+  const circle = document.getElementById("circleInput").value;
+  const nameErr = document.getElementById("nameError");
+  const circleErr = document.getElementById("circleError");
+  const successMsg = document.getElementById("successMsg");
+
+  nameErr.style.display = "none";
+  circleErr.style.display = "none";
+  successMsg.style.display = "none";
+
+  if (!name) { nameErr.style.display="block"; return; }
+  if (!circle) { circleErr.style.display="block"; return; }
+
+  if (guests.some(g => g.name.toLowerCase()===name.toLowerCase())) {
+    successMsg.textContent = name + " ya confirmó. ¡Nos vemos el 18!";
+    successMsg.style.display = "block";
+    return;
+  }
+
+  guests.push({name, circle});
+  renderGuests();
+
+  successMsg.textContent = "¡" + name + " confirmado/a! Nos vemos el 18 ✦";
+  successMsg.style.display = "block";
+
+  document.getElementById("nameInput").value="";
+  document.getElementById("circleInput").value="";
+}
+
+// RENDERIZAR LISTA
+function renderGuests() {
+  const list = document.getElementById("guestsListInner");
+  list.innerHTML = guests.map(g => `<span class="guest-pill">${g.name}<span class="guest-circle"> · ${g.circle}</span></span>`).join("");
+  document.getElementById("counterNum").textContent = guests.length;
+}
+
 // iniciar login
 login();
 </script>
