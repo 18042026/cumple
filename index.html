@@ -183,6 +183,7 @@
     padding-top: 20px;
     border-top: 1px solid #ccc;
   }
+ 
   .guest-pill {
     display: inline-block;
     border: 1px solid #1a1a1a;
@@ -411,7 +412,14 @@ async function login() {
 
       // 🔥 mostrar contenido correctamente
       document.getElementById("contenido").style.display = "block";
-     
+      const sectionTitle = rsvpDiv.closest('.section').querySelector('.section-title');
+
+    // Reemplazamos el contenido por mensaje
+    rsvpDiv.innerHTML = '<div class="asistenciaok">Asistencia confirmada.</div>';
+
+    // Aplicamos estilos
+    rsvpDiv.style.borderTop = "0px";
+    if (sectionTitle) sectionTitle.style.display = "none";
       if (estado === "sin_visitar") {
         await actualizarEstado(id, "leido");
       }
@@ -442,7 +450,7 @@ async function confirmarAsistencia() {
     
     // Reemplazar el botón por mensaje de confirmación
     const rsvpDiv = document.getElementById("attendForm");
-    rsvpDiv.innerHTML = '<div class="success-msg">Asistencia confirmada.</div>';
+    rsvpDiv.innerHTML = '<div class="asistenciaok">Asistencia confirmada.</div>';
   }
 }
 
