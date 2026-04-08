@@ -364,12 +364,8 @@
       <div id="guestsList" class="guests-list" style="display:none;"><div id="guestsListInner" class="guests-list-inner"></div></div>
     </div>
 
-    <div class="rsvp-cta">
-    <button type="button" class="attend-btn" id="toggleFormBtn" onclick="toggleForm()">Confirmo asistencia</button>
-
-    <div class="form-box" id="attendForm">
-      <button onclick="confirmarAsistencia()">Confirmar asistencia</button>
-    </div>
+    <div class="rsvp-cta" id="attendForm">
+    <button type="button" class="attend-btn" onclick="confirmarAsistencia()">Confirmo asistencia</button>
 
     <div class="success-msg" id="successMsg"></div>
     </div>
@@ -457,13 +453,6 @@ async function confirmarAsistencia() {
     alert("¡Asistencia confirmada!");
   }
 }
-
- // TOGGLE FORM
-function toggleForm() {
-  const form = document.getElementById("attendForm");
-  form.style.display = (form.style.display==="block")?"none":"block";
-}
-
 (function initBandeetScroll() {
     var img = document.getElementById('bandeetImg');
     if (!img) return;
