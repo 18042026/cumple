@@ -408,12 +408,7 @@ async function login() {
 
     if (password === input) {
       usuarioActual = { id, nombre, estado };
-
-      document.getElementById("nombreInvitado").innerText = "Hola " + nombre;
-
-      // 🔥 mostrar contenido correctamente
-      document.getElementById("contenido").style.display = "block";
-
+     
       if (estado === "sin_visitar") {
         await actualizarEstado(id, "leido");
       }
