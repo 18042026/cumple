@@ -356,19 +356,12 @@
   <div class="divider reveal"><span>✦</span></div>
 
   <div class="section reveal">
-    <div class="section-title">Confirmá tu asistencia</div>
-
-    <div class="counter-bar">
-      <div class="counter-num" id="counterNum">0</div>
-      <div class="counter-label">confirmados</div>
-      <div id="guestsList" class="guests-list" style="display:none;"><div id="guestsListInner" class="guests-list-inner"></div></div>
-    </div>
-
-    <div class="rsvp-cta" id="attendForm">
-    <button type="button" class="attend-btn" onclick="confirmarAsistencia()">Confirmo asistencia</button>
-
-    <div class="success-msg" id="successMsg"></div>
-    </div>
+   <div class="section-title">Confirmá tu asistencia</div>
+ 
+     <div class="rsvp-cta" id="attendForm">
+        <button type="button" class="attend-btn" id="confirmBtn" onclick="confirmarAsistencia()">Confirmo asistencia</button>
+        <div class="success-msg" id="successMsg"></div>
+     </div>
   </div>
 
   <div class="divider reveal"><span>✦</span></div>
@@ -444,15 +437,19 @@ async function actualizarEstado(id, estado) {
 
 // CONFIRMAR ASISTENCIA
 async function confirmarAsistencia() {
-  if (!usuarioActual) return;
+  if (!usuarioActual) return; // si no hay login, no hace nada
 
   let ok = confirm("¿Querés confirmar tu invitación?");
 
   if (ok) {
     await actualizarEstado(usuarioActual.id, "confirmado");
-    alert("¡Asistencia confirmada!");
+    
+    // Reemplazar el botón por mensaje de confirmación
+    const rsvpDiv = document.getElementById("attendForm");
+    rsvpDiv.innerHTML = '<div class="success-msg">Asistencia confirmada.</div>';
   }
 }
+
 (function initBandeetScroll() {
     var img = document.getElementById('bandeetImg');
     if (!img) return;
