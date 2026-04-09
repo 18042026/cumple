@@ -94,6 +94,10 @@
   background: #007eb5;
 }
 
+ .reel-track {
+  will-change: transform;
+}
+ 
 .countdown {
   display: flex;
   justify-content: center;
@@ -693,27 +697,39 @@ function iniciarCountdown() {
   }
 
   function animarReels() {
-    const reels = document.querySelectorAll(".reel");
+  const reels = document.querySelectorAll(".reel");
 
-    reels.forEach((reel, index) => {
-      const track = reel.querySelector(".reel-track");
-      const final = parseInt(reel.dataset.final);
+  reels.forEach((reel, index) => {
+    const track = reel.querySelector(".reel-track");
+    const final = parseInt(reel.dataset.final);
 
-      const alturaNumero = 48; // debe coincidir con CSS
-      const totalNumeros = track.children.length;
+    const alturaNumero = 48;
+    const totalNumeros = track.children.length;
 
-      // posición final
-      const offset = (totalNumeros - 10 + final) * alturaNumero;
+    // Posición final (última vuelta visible)
+    const offsetFinal = (totalNumeros - 10 + final) * alturaNumero;
 
-      // delay escalonado (más realista)
-      const delay = index * 100;
+    // Posición inicial (arranca arriba)
+    const offsetInicio = offsetFinal - 2000;
 
-      setTimeout(() => {
-        track.style.transition = "transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1)";
-        track.style.transform = `translateY(-${offset}px)`;
-      }, delay);
-    });
-  }
+    // Set inicial sin transición
+    track.style.transition = "none";
+    track.style.transform = `translateY(-${offsetInicio}px)`;
+
+    // Forzar reflow (clave para animación)
+    track.offsetHeight;
+
+    // Delay escalonado (como máquina real)
+    const delay = index * 120;
+
+    setTimeout(() => {
+      track.style.transition = `
+        transform 1.8s cubic-bezier(0.1, 0.7, 0.2, 1)
+      `;
+      track.style.transform = `translateY(-${offsetFinal}px)`;
+    }, delay);
+  });
+}
 
   function actualizar() {
     const ahora = new Date();
@@ -744,6 +760,15 @@ function iniciarCountdown() {
 }
 
 iniciarCountdown();
+
+ setTimeout(() => {
+  track.style.transition = "transform 0.15s ease-out";
+  track.style.transform = `translateY(-${offsetFinal - 10}px)`;
+
+  setTimeout(() => {
+    track.style.transform = `translateY(-${offsetFinal}px)`;
+  }, 150);
+}, 1800 + delay);
 </script>
  
 </body>
