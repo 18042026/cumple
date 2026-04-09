@@ -97,44 +97,61 @@
 .countdown {
   display: flex;
   justify-content: center;
-  align-items: center;
   gap: 14px;
-  margin: 50px 0;
   flex-wrap: wrap;
+  margin: 50px 0;
 }
 
-/* SLOT */
 .slot {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* VENTANA (esto es clave) */
+/* ventana */
 .slot-window {
-  background: #ffffff;
-  border: 2px solid #d9d9d9;
+  display: flex;
+  gap: 4px;
+  background: #fff;
+  padding: 6px;
   border-radius: 6px;
-  width: 80px;
-  height: 80px;
+  border: 2px solid #ddd;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* columna */
+.reel {
+  width: 40px;
+  height: 60px;
+  overflow: hidden;
+  position: relative;
+  background: #fff;
+}
+
+/* track */
+.reel-track {
+  display: flex;
+  flex-direction: column;
+}
+
+/* números */
+.num {
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  box-shadow:
-    inset 0 2px 4px rgba(0,0,0,0.08),
-    0 3px 8px rgba(0,0,0,0.1);
-  position: relative;
+  font-size: 42px;
+  font-weight: 900;
+  color: #c40000;
+  font-family: 'Arial Black', Impact, sans-serif;
 }
 
-/* NÚMERO */
-.digit {
-  font-size: 48px;
-  font-weight: 900;
-  color: #c40000; /* 🔥 rojo casino */
-  font-family: 'Arial Black', Impact, sans-serif;
-  letter-spacing: 2px;
-  animation: reelSpin 0.4s ease;
+/* etiqueta */
+.slot-label {
+  margin-top: 6px;
+  font-size: 10px;
+  color: #666;
+  letter-spacing: 1px;
 }
 
 /* EFECTO SOMBRA ARRIBA/ABAJO (clave realismo) */
@@ -156,14 +173,6 @@
 .slot-window::after {
   bottom: 0;
   background: linear-gradient(to top, rgba(0,0,0,0.1), transparent);
-}
-
-/* LABEL */
-.slot-label {
-  margin-top: 6px;
-  font-size: 10px;
-  color: #777;
-  letter-spacing: 1px;
 }
 
 /* ANIMACIÓN TIPO RODILLO */
@@ -648,25 +657,62 @@ login();
 <script>
 function iniciarCountdown() {
   const countdownEl = document.querySelector(".countdown");
-
-  // Fecha objetivo
   const fechaEvento = new Date("2026-04-18T21:00:00");
 
-  let prevValues = {};
+  function crearReel(valor, label) {
+    const v = valor.toString().padStart(2, '0');
 
-  function format(n) {
-    return n.toString().padStart(2, '0');
-  }
-
-  function crearSlot(valor, label) {
     return `
       <div class="slot">
         <div class="slot-window">
-          <div class="digit">${format(valor)}</div>
+          ${crearColumna(v[0])}
+          ${crearColumna(v[1])}
         </div>
         <span class="slot-label">${label}</span>
       </div>
     `;
+  }
+
+  function crearColumna(numeroFinal) {
+    let numeros = "";
+
+    // generamos varias vueltas (para efecto giro)
+    for (let i = 0; i < 20; i++) {
+      for (let n = 0; n <= 9; n++) {
+        numeros += `<div class="num">${n}</div>`;
+      }
+    }
+
+    return `
+      <div class="reel" data-final="${numeroFinal}">
+        <div class="reel-track">
+          ${numeros}
+        </div>
+      </div>
+    `;
+  }
+
+  function animarReels() {
+    const reels = document.querySelectorAll(".reel");
+
+    reels.forEach((reel, index) => {
+      const track = reel.querySelector(".reel-track");
+      const final = parseInt(reel.dataset.final);
+
+      const alturaNumero = 48; // debe coincidir con CSS
+      const totalNumeros = track.children.length;
+
+      // posición final
+      const offset = (totalNumeros - 10 + final) * alturaNumero;
+
+      // delay escalonado (más realista)
+      const delay = index * 100;
+
+      setTimeout(() => {
+        track.style.transition = "transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1)";
+        track.style.transform = `translateY(-${offset}px)`;
+      }, delay);
+    });
   }
 
   function actualizar() {
@@ -674,12 +720,6 @@ function iniciarCountdown() {
     const diferencia = fechaEvento - ahora;
 
     if (diferencia <= 0) {
-      countdownEl.innerHTML = `
-        ${crearSlot(0, "DÍAS")}
-        ${crearSlot(0, "HS")}
-        ${crearSlot(0, "MIN")}
-        ${crearSlot(0, "SEG")}
-      `;
       return;
     }
 
@@ -688,18 +728,15 @@ function iniciarCountdown() {
     const minutos = Math.floor((diferencia / (1000 * 60)) % 60);
     const segundos = Math.floor((diferencia / 1000) % 60);
 
-    const valores = { dias, horas, minutos, segundos };
+    countdownEl.innerHTML = `
+      ${crearReel(dias, "DÍAS")}
+      ${crearReel(horas, "HS")}
+      ${crearReel(minutos, "MIN")}
+      ${crearReel(segundos, "SEG")}
+    `;
 
-    // Solo actualiza si cambió (mejor animación tipo slot)
-    if (JSON.stringify(valores) !== JSON.stringify(prevValues)) {
-      countdownEl.innerHTML = `
-        ${crearSlot(dias, "DÍAS")}
-        ${crearSlot(horas, "HS")}
-        ${crearSlot(minutos, "MIN")}
-        ${crearSlot(segundos, "SEG")}
-      `;
-      prevValues = valores;
-    }
+    // activar animación después de render
+    setTimeout(animarReels, 50);
   }
 
   actualizar();
