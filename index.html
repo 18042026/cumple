@@ -98,36 +98,58 @@
  .countdown {
   display: flex;
   justify-content: center;
-  align-items: center;
   gap: 14px;
-  margin: 50px 0;
   flex-wrap: wrap;
+  margin: 50px 0;
 }
 
-/* SLOT */
 .slot {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* VENTANA (esto es clave) */
 .slot-window {
-  background: #ffffff;
-  border: 2px solid #d9d9d9;
-  border-radius: 6px;
-  width: 80px;
-  height: 80px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  box-shadow:
-    inset 0 2px 4px rgba(0,0,0,0.08),
-    0 3px 8px rgba(0,0,0,0.1);
-  position: relative;
+  gap: 4px;
+  background: #fff;
+  padding: 6px;
+  border-radius: 6px;
+  border: 2px solid #ddd;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
 
+.reel {
+  width: 40px;
+  height: 48px; 
+  overflow: hidden;
+  position: relative;
+  background: #fff;
+  border-radius: 6px;
+}
+
+.reel-track {
+  display: flex;
+  flex-direction: column;
+}
+
+.num {
+  height: 48px; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 42px;
+  font-weight: 900;
+  color: #c40000;
+  font-family: 'Arial Black', Impact, sans-serif;
+}
+
+.slot-label {
+  margin-top: 6px;
+  font-size: 10px;
+  color: #666;
+  letter-spacing: 1px;
+}
 /* NÚMERO */
 .digit {
   font-size: 48px;
@@ -648,62 +670,102 @@ login();
 <script>
 function iniciarCountdown() {
   const countdownEl = document.querySelector(".countdown");
-
-  // Fecha objetivo
   const fechaEvento = new Date("2026-04-18T21:00:00");
 
-  let prevValues = {};
+  // Guardamos los valores anteriores para comparar
+  let prevValues = { dias: null, horas: null, minutos: null, segundos: null };
 
   function format(n) {
-    return n.toString().padStart(2, '0');
+    return n.toString().padStart(2,"0");
   }
 
-  function crearSlot(valor, label) {
+  function crearSlot(valor, label, tipo) {
+    const v = format(valor);
     return `
       <div class="slot">
         <div class="slot-window">
-          <div class="digit">${format(valor)}</div>
+          ${[...v].map((d, i) => `
+            <div class="reel" data-type="${tipo}" data-digit="${i}">
+              <div class="reel-track"><div class="num">${d}</div></div>
+            </div>`).join('')}
         </div>
         <span class="slot-label">${label}</span>
       </div>
     `;
   }
 
+  // Inicializar el DOM completo solo una vez
+  function initDOM(dias, horas, minutos, segundos) {
+    countdownEl.innerHTML = `
+      ${crearSlot(dias, "DÍAS", "dias")}
+      ${crearSlot(horas, "HS", "horas")}
+      ${crearSlot(minutos, "MIN", "minutos")}
+      ${crearSlot(segundos, "SEG", "segundos")}
+    `;
+  }
+
+  // Animar un reel específico
+  function animarReel(reel, nuevoValor) {
+    const track = reel.querySelector(".reel-track");
+    const altura = 48;
+    // Creamos un track temporal con vueltas + final
+    let contenido = "";
+    for(let i=0;i<3;i++){
+      for(let n=0;n<=9;n++){
+        contenido += `<div class="num">${n}</div>`;
+      }
+    }
+    contenido += `<div class="num final">${nuevoValor}</div>`;
+    track.innerHTML = contenido;
+
+    // animación hacia el número final
+    const total = track.children.length;
+    const offset = (total - 5) * altura; // centrado
+    track.style.transition = "transform 1.2s cubic-bezier(0.1, 0.7, 0.2, 1)";
+    track.style.transform = `translateY(-${offset}px)`;
+  }
+
   function actualizar() {
     const ahora = new Date();
-    const diferencia = fechaEvento - ahora;
+    const diff = fechaEvento - ahora;
+    if(diff <= 0) return;
 
-    if (diferencia <= 0) {
-      countdownEl.innerHTML = `
-        ${crearSlot(0, "DÍAS")}
-        ${crearSlot(0, "HS")}
-        ${crearSlot(0, "MIN")}
-        ${crearSlot(0, "SEG")}
-      `;
-      return;
-    }
-
-    const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
-    const horas = Math.floor((diferencia / (1000 * 60 * 60)) % 24);
-    const minutos = Math.floor((diferencia / (1000 * 60)) % 60);
-    const segundos = Math.floor((diferencia / 1000) % 60);
+    const dias = Math.floor(diff / (1000*60*60*24));
+    const horas = Math.floor((diff / (1000*60*60)) % 24);
+    const minutos = Math.floor((diff / (1000*60)) % 60);
+    const segundos = Math.floor((diff / 1000) % 60);
 
     const valores = { dias, horas, minutos, segundos };
 
-    // Solo actualiza si cambió (mejor animación tipo slot)
-    if (JSON.stringify(valores) !== JSON.stringify(prevValues)) {
-      countdownEl.innerHTML = `
-        ${crearSlot(dias, "DÍAS")}
-        ${crearSlot(horas, "HS")}
-        ${crearSlot(minutos, "MIN")}
-        ${crearSlot(segundos, "SEG")}
-      `;
+    // Inicializamos DOM la primera vez
+    if(prevValues.dias === null){
+      initDOM(dias, horas, minutos, segundos);
       prevValues = valores;
+      return;
     }
+
+    // Animar solo los reels que cambiaron
+    ["dias","horas","minutos","segundos"].forEach(tipo => {
+      const viejo = prevValues[tipo];
+      const nuevo = valores[tipo];
+      if(viejo !== nuevo){
+        const digitsViejos = format(viejo);
+        const digitsNuevos = format(nuevo);
+        // animar cada dígito que cambió
+        for(let i=0;i<2;i++){
+          if(digitsViejos[i] !== digitsNuevos[i]){
+            const reel = countdownEl.querySelector(`.reel[data-type="${tipo}"][data-digit="${i}"]`);
+            if(reel) animarReel(reel,digitsNuevos[i]);
+          }
+        }
+      }
+    });
+
+    prevValues = valores;
   }
 
   actualizar();
-  setInterval(actualizar, 1000);
+  setInterval(actualizar,1000);
 }
 
 iniciarCountdown();
