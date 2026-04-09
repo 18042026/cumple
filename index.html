@@ -93,6 +93,41 @@
 .mp-btn:hover {
   background: #007eb5;
 }
+
+.countdown {
+  display: flex;
+  justify-content: center;
+  align-items: center; /* centra verticalmente */
+  gap: 15px;
+  margin: 40px 0;
+  flex-wrap: wrap;
+}
+
+.countdown-box {
+  background: #111;
+  color: #fff;
+  padding: 20px 15px;
+  border-radius: 12px;
+  text-align: center;
+  min-width: 80px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.countdown-box span {
+  display: block;
+  font-size: 36px; /* 🔥 más grande */
+  font-weight: 800;
+  line-height: 1;
+}
+
+.countdown-box small {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
  
   /* Mismo fondo que body: el .reveal usa transform/opacity y rompe multiply si el img hereda otro “backdrop” */
   .bandeet-reveal {
@@ -393,8 +428,7 @@
  <div class="pay">
    <div class="pay">
     <a href="https://mpago.la/222P3nA" target="_blank" class="mp-btn">
-      <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.18.9/mercadopago/logo__large.png" alt="MercadoPago">
-      Panchos+bebidas+rifas
+      Regalo 🎁
     </a>
   </div>
  </div>
