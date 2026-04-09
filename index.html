@@ -362,7 +362,17 @@
         <div class="success-msg" id="successMsg"></div>
      </div>
   </div>
-
+ 
+ <div class="countdown">00:00:00HS</div>
+ <div class="pay">
+   <div class="pay">
+    <a href="https://mpago.la/222P3nA" target="_blank" class="mp-btn">
+      <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.18.9/mercadopago/logo__large.png" alt="MercadoPago">
+      Panchos+bebidas+rifas
+    </a>
+  </div>
+ </div>
+ 
   <div class="divider reveal"><span>✦</span></div>
 
   <div class="section reveal">
@@ -513,7 +523,49 @@ async function confirmarAsistencia() {
 // iniciar login
 login();
 </script>
+<script>
+function iniciarCountdown() {
+  const countdownEl = document.querySelector(".countdown");
 
+  // Fecha objetivo: 18 abril 2026 21:00
+  const fechaEvento = new Date("2026-04-18T21:00:00");
+
+  function actualizar() {
+    const ahora = new Date();
+    const diferencia = fechaEvento - ahora;
+
+    if (diferencia <= 0) {
+      countdownEl.innerHTML = "00:00:00:00 HS";
+      return;
+    }
+
+    const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+    const horas = Math.floor((diferencia / (1000 * 60 * 60)) % 24);
+    const minutos = Math.floor((diferencia / (1000 * 60)) % 60);
+    const segundos = Math.floor((diferencia / 1000) % 60);
+
+    countdownEl.innerHTML = `
+      <div class="countdown-box">
+        <span>${dias}</span><small>días</small>
+      </div>
+      <div class="countdown-box">
+        <span>${horas}</span><small>hs</small>
+      </div>
+      <div class="countdown-box">
+        <span>${minutos}</span><small>min</small>
+      </div>
+      <div class="countdown-box">
+        <span>${segundos}</span><small>seg</small>
+      </div>
+    `;
+  }
+
+  actualizar();
+  setInterval(actualizar, 1000);
+}
+
+iniciarCountdown();
+</script>
  
 </body>
 </html>
