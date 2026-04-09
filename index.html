@@ -126,24 +126,18 @@
 /* columna */
 .reel {
   width: 40px;
-  height: 60px;
+  height: 48px; /* altura = altura de un número */
   overflow: hidden;
   position: relative;
   background: #fff;
+  border-radius: 6px;
 }
 
-/* track */
-.reel-track {
-  display: flex;
-  flex-direction: column;
-}
-
-/* números */
 .num {
-  height: 48px;
+  height: 48px; /* igual que el contenedor */
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   font-size: 42px;
   font-weight: 900;
   color: #c40000;
@@ -663,96 +657,85 @@ function iniciarCountdown() {
   const countdownEl = document.querySelector(".countdown");
   const fechaEvento = new Date("2026-04-18T21:00:00");
 
-  function crearReel(valor, label) {
-    const v = valor.toString().padStart(2, '0');
+  // Guardamos el valor anterior para solo animar si cambió
+  let prevValues = { dias: null, horas: null, minutos: null, segundos: null };
 
+  function format(n) {
+    return n.toString().padStart(2, "0");
+  }
+
+  function crearReel(valor, label, tipo) {
+    const v = format(valor);
     return `
       <div class="slot">
         <div class="slot-window">
-          ${crearColumna(v[0])}
-          ${crearColumna(v[1])}
+          ${[...v].map((d, i) => `<div class="reel" data-final="${d}" data-type="${tipo}-${i}">
+            <div class="reel-track"></div>
+          </div>`).join('')}
         </div>
         <span class="slot-label">${label}</span>
       </div>
     `;
   }
 
-  function crearColumna(numeroFinal) {
-    let numeros = "";
+  function llenarTrack(reel) {
+    const final = parseInt(reel.dataset.final);
+    const track = reel.querySelector(".reel-track");
+    track.innerHTML = "";
 
-    // generamos varias vueltas (para efecto giro)
-    for (let i = 0; i < 20; i++) {
+    // Creamos 3 vueltas completas para animación suave
+    for (let i = 0; i < 3; i++) {
       for (let n = 0; n <= 9; n++) {
-        numeros += `<div class="num">${n}</div>`;
+        track.innerHTML += `<div class="num">${n}</div>`;
       }
     }
 
-    return `
-      <div class="reel" data-final="${numeroFinal}">
-        <div class="reel-track">
-          ${numeros}
-        </div>
-      </div>
-    `;
+    // agregamos el número final al centro
+    track.innerHTML += `<div class="num final">${final}</div>`;
   }
 
-  function animarReels() {
-  const reels = document.querySelectorAll(".reel");
-
-  reels.forEach((reel, index) => {
+  function animarReel(reel) {
     const track = reel.querySelector(".reel-track");
-    const final = parseInt(reel.dataset.final);
+    const altura = 48; // altura de un número
+    const total = track.children.length;
 
-    const alturaNumero = 48;
-    const totalNumeros = track.children.length;
+    // Posición final: centrado
+    const offset = (total - 5) * altura; // -5 para que el final quede en el medio
 
-    // Posición final (última vuelta visible)
-    const offsetFinal = (totalNumeros - 10 + final) * alturaNumero;
-
-    // Posición inicial (arranca arriba)
-    const offsetInicio = offsetFinal - 2000;
-
-    // Set inicial sin transición
-    track.style.transition = "none";
-    track.style.transform = `translateY(-${offsetInicio}px)`;
-
-    // Forzar reflow (clave para animación)
-    track.offsetHeight;
-
-    // Delay escalonado (como máquina real)
-    const delay = index * 120;
-
-    setTimeout(() => {
-      track.style.transition = `
-        transform 1.8s cubic-bezier(0.1, 0.7, 0.2, 1)
-      `;
-      track.style.transform = `translateY(-${offsetFinal}px)`;
-    }, delay);
-  });
-}
+    track.style.transition = "transform 1.2s cubic-bezier(0.1, 0.7, 0.2, 1)";
+    track.style.transform = `translateY(-${offset}px)`;
+  }
 
   function actualizar() {
     const ahora = new Date();
     const diferencia = fechaEvento - ahora;
 
-    if (diferencia <= 0) {
-      return;
-    }
+    if (diferencia <= 0) return;
 
     const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
     const horas = Math.floor((diferencia / (1000 * 60 * 60)) % 24);
     const minutos = Math.floor((diferencia / (1000 * 60)) % 60);
     const segundos = Math.floor((diferencia / 1000) % 60);
 
-    countdownEl.innerHTML = `
-      ${crearReel(dias, "DÍAS")}
-      ${crearReel(horas, "HS")}
-      ${crearReel(minutos, "MIN")}
-      ${crearReel(segundos, "SEG")}
-    `;
+    const valores = { dias, horas, minutos, segundos };
 
-    // activar animación después de render
-    setTimeout(animarReels, 50);
+    // Solo re-renderizamos los reels si cambió el valor
+    if (prevValues.dias !== dias || prevValues.horas !== horas || prevValues.minutos !== minutos || prevValues.segundos !== segundos) {
+      countdownEl.innerHTML = `
+        ${crearReel(dias, "DÍAS", "dias")}
+        ${crearReel(horas, "HS", "horas")}
+        ${crearReel(minutos, "MIN", "minutos")}
+        ${crearReel(segundos, "SEG", "segundos")}
+      `;
+      
+      // Llenar tracks
+      countdownEl.querySelectorAll(".reel").forEach(llenarTrack);
+
+      // Animar SOLO los segundos
+      countdownEl.querySelectorAll('[data-type^="segundos"]').forEach(animarReel);
+
+      prevValues = valores;
+    }
   }
 
   actualizar();
@@ -760,15 +743,6 @@ function iniciarCountdown() {
 }
 
 iniciarCountdown();
-
- setTimeout(() => {
-  track.style.transition = "transform 0.15s ease-out";
-  track.style.transform = `translateY(-${offsetFinal - 10}px)`;
-
-  setTimeout(() => {
-    track.style.transform = `translateY(-${offsetFinal}px)`;
-  }, 150);
-}, 1800 + delay);
 </script>
  
 </body>
